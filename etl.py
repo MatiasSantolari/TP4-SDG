@@ -84,6 +84,7 @@ class ETLProcess:
             logging.error(f"Error al crear la base de datos '{self.db_name_dest}': {e}")
             raise
 
+
     def generar_esquema_sql(self):
         """
         Genera el esquema SQL para las tablas del modelo dimensional (dimensiones y tabla de hechos)
