@@ -273,3 +273,9 @@ West   |California   |Eureka     |96887
 West   |Washington   |Seattle    |98023
 West   |Washington   |Redmond    |98123
 West   |Washington   |Spokane    |98320
+West   |California   |Fresno      |93450
+West   |California   |Sacramento   |96701
+West   |California   |Eureka     |96887
+West   |Washington   |Seattle    |98023
+West   |Washington   |Redmond    |98123
+West   |Washington   |Spokane    |98320

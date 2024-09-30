@@ -1,0 +1,43 @@
+product_id,detalle,tipoEnvase,litros,tipoBebida
+1,Kool Cola,Bottle,1.0,Bebida Kool
+2,Kool Cola,Bottle,2.0,Bebida Kool
+3,Kool Cola,Can,0.5,Bebida Kool
+4,Diet Cola,Bottle,1.0,Bebida de dieta
+5,Diet Cola,Bottle,2.0,Bebida de dieta
+6,Diet Cola,Can,0.5,Bebida de dieta
+7,Caffeine Free Cola,Bottle,1.0,Bebida de cafeína
+8,Caffeine Free Cola,Bottle,2.0,Bebida de cafeína
+9,Caffeine Free Cola,Can,0.5,Bebida de cafeína
+10,Old Fashioned Root Beer,Bottle,1.0,Bebida Root
+11,Old Fashioned Root Beer,Bottle,2.0,Bebida Root
+12,Old Fashioned Root Beer,Can,0.5,Bebida Root
+13,Diet Root Beer,Bottle,1.0,Bebida de dieta
+14,Diet Root Beer,Bottle,2.0,Bebida de dieta
+15,Diet Root Beer,Can,0.5,Bebida de dieta
+16,Energy drink,Bottle,1.0,Bebida energética
+17,Energy drink,Bottle,2.0,Bebida energética
+18,Energy drink,Can,0.5,Bebida energética
+19,Birch Beer,Bottle,1.0,Otro tipo de bebida
+20,Birch Beer,Bottle,2.0,Otro tipo de bebida
+21,Birch Beer,Can,0.5,Otro tipo de bebida
+22,Dark Cream Soda,Bottle,1.0,Bebida de soda
+23,Dark Cream Soda,Bottle,2.0,Bebida de soda
+24,Dark Cream Soda,Can,0.5,Bebida de soda
+25,Vanilla Cream Soda,Bottle,1.0,Bebida de soda
+26,Vanilla Cream Soda,Bottle,2.0,Bebida de soda
+27,Vanilla Cream Soda,Bottle,0.67,Bebida de soda
+28,Vanilla Cream Soda,Can,0.5,Bebida de soda
+29,Diet Cream Soda,Bottle,1.0,Bebida de dieta
+30,Diet Cream Soda,Bottle,2.0,Bebida de dieta
+31,Diet Cream Soda,Can,0.5,Bebida de dieta
+32,Grapefruit juice,Bottle,1.0,Jugo
+33,Grapefruit juice,Bottle,2.0,Jugo
+34,Grapefruit juice,Can,0.5,Jugo
+35,Orange juice,Bottle,1.0,Jugo
+36,Orange juice,Bottle,2.0,Jugo
+37,Orange juice,Can,0.5,Jugo
+38,Diet energy drink,Bottle,1.0,Bebida de dieta
+39,Diet energy drink,Bottle,2.0,Bebida de dieta
+40,Diet energy drink,Can,0.5,Bebida de dieta
+41,Trappiste Beer,Can,0.33,Otro tipo de bebida
+42,Orval Beer,Can,0.33,Otro tipo de bebida
