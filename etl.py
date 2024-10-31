@@ -13,7 +13,7 @@ from sqlalchemy import (
     Table,
     create_engine,
     select,
-    text,
+    text, func,
 )
 from sqlalchemy.dialects import mysql
 from sqlalchemy.dialects.mysql import DATE, FLOAT, INTEGER, VARCHAR
@@ -242,21 +242,29 @@ class ETLProcess:
             billing = Table('billing', origin_metadata, autoload_with=self.engine_origin)
             billing_detail = Table('billing_detail', origin_metadata, autoload_with=self.engine_origin)
             prices = Table('prices', origin_metadata, autoload_with=self.engine_origin)
-
+            discounts = Table('discounts', origin_metadata, autoload_with=self.engine_origin)
             query = select(
                 billing.c.BILLING_ID.label('billing_id'),
                 billing.c.REGION.label('region'),
                 billing.c.BRANCH_ID.label('branch_id'),
-                billing.c.DATE.label('date'),
+                func.date_format(billing.c.DATE, '%d/%m/%Y').label('date'),
                 billing.c.CUSTOMER_ID.label('customer_id'),
                 billing.c.EMPLOYEE_ID.label('employee_id'),
                 billing_detail.c.PRODUCT_ID.label('product_id'),
                 billing_detail.c.QUANTITY.label('quantity'),
-                prices.c.DATE.label('date_price'),
-                prices.c.PRICE.label('price')
+                func.date_format(prices.c.DATE, '%d/%m/%Y').label('date_price'),
+                prices.c.PRICE.label('price'),
+                func.date_format(discounts.c.FROM, '%d/%m/%Y').label('from_discount'),
+                func.date_format(discounts.c.UNTIL, '%d/%m/%Y').label('until_discount'),
+                func.coalesce(discounts.c.PERCENTAGE, 0).label('discount_percentage')
             ).select_from(
                 billing.join(billing_detail, billing.c.BILLING_ID == billing_detail.c.BILLING_ID)
                 .join(prices, billing_detail.c.PRODUCT_ID == prices.c.PRODUCT_ID)
+                .join(discounts, (
+                        (billing.c.DATE >= discounts.c.FROM) &
+                        ((billing.c.DATE <= discounts.c.UNTIL) | (discounts.c.UNTIL.is_(None))) &
+                        (prices.c.PRICE * billing_detail.c.QUANTITY > discounts.c.TOTAL_BILLING)
+                ), isouter=True)
             )
 
             with self.engine_origin.connect() as connection:
@@ -265,13 +273,35 @@ class ETLProcess:
 
             billing_df = pd.DataFrame(billing_data, columns=[
                 'billing_id', 'region', 'branch_id', 'date', 'customer_id',
-                'employee_id', 'product_id', 'quantity', 'date_price', 'price'
+                'employee_id', 'product_id', 'quantity', 'date_price', 'price', 'from_discount', 'until_discount',
+                'discount_percentage'
             ])
-            billing_df['date'] = pd.to_datetime(billing_df['date'], errors='coerce')
-            billing_df.dropna(subset=['date'], inplace=True)
 
-            # Crear la dimensión tiempo
-            unique_dates = billing_df['date'].drop_duplicates().reset_index(drop=True)
+            # Convertir columnas relevantes a tipo float para evitar errores de operación
+            billing_df['price'] = billing_df['price'].astype(float)
+            billing_df['quantity'] = billing_df['quantity'].astype(float)
+            billing_df['discount_percentage'] = billing_df['discount_percentage'].astype(float)
+
+            # Convertir la columna 'date' a datetime
+            billing_df['date'] = pd.to_datetime(billing_df['date'], format='%d/%m/%Y', errors='coerce')
+            billing_df.to_csv('data/billing_df.csv', index=False)
+
+            historial_ventas = pd.read_csv('data/TDC_history_sales.Billing.csv')
+            if 'billing_id' in billing_df.columns and 'product_id' in billing_df.columns and 'billing_id' in historial_ventas.columns and 'product_id' in historial_ventas.columns:
+                ventas_historial = pd.concat([billing_df, historial_ventas], axis=0, ignore_index=True, sort=False)
+            else:
+                ventas_historial = billing_df
+            if 'id' in ventas_historial.columns:
+                ventas_historial.drop(columns=['id'], inplace=True)
+
+            ventas_con_nulos_especificos = ventas_historial[
+                ventas_historial[['price', 'date_price', 'employee_id', 'branch_id']].isnull().any(axis=1)
+            ]
+            ventas_con_nulos_especificos.to_csv('data/ventas_con_nulos_especificos.csv', index=False)
+            ventas_historial.dropna(subset=['price', 'date_price', 'employee_id', 'branch_id'], inplace=True)
+
+            unique_dates = pd.to_datetime(ventas_historial['date'], format='%d/%m/%Y',
+                                          errors='coerce').dropna().drop_duplicates().reset_index(drop=True)
             self.dimension_tiempo = pd.DataFrame({
                 'id_tiempo': unique_dates.index + 1,
                 'fecha': unique_dates,
@@ -280,18 +310,18 @@ class ETLProcess:
                 'trimestre': unique_dates.dt.quarter,
                 'año': unique_dates.dt.year
             })
-
-            # Mapear las fechas a id_tiempo
             date_id_map = self.dimension_tiempo.set_index('fecha')['id_tiempo']
 
-            # Crear la tabla de ventas
             self.ventas = pd.DataFrame({
-                'id_tiempo': billing_df['date'].map(date_id_map),
-                'id_cliente': billing_df['customer_id'],
-                'id_vendedor': billing_df['employee_id'],
-                'id_producto': billing_df['product_id'],
-                'cantidad': billing_df['quantity'],
-                'precio': billing_df['price']
+                'id_tiempo': ventas_historial['date'].map(date_id_map),
+                'id_cliente': ventas_historial['customer_id'],
+                'id_vendedor': ventas_historial['employee_id'],
+                'id_producto': ventas_historial['product_id'],
+                'cantidad': ventas_historial['quantity'],
+                'precio': round(
+                    ventas_historial['price'] * ventas_historial['quantity'] *
+                    (1 - ventas_historial['discount_percentage'] / 100), 2
+                )
             })
 
             logging.info('Tabla de ventas creada con éxito.')
